@@ -8,5 +8,5 @@ wordcloud==1.9.2
 prophet==1.1.4
 networkx==3.1
 igraph==0.10.8
-streamlit_extras==0.3.2
+streamlit-extras==0.3.2
 openpyxl==3.1.2
