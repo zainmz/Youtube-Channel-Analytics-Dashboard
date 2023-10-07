@@ -24,6 +24,11 @@ from channelVideoDataExtraction import *
 @st.cache_data
 def download_data(api_key, channel_id):
     channel_details = getChannelData(api_key, channel_id)
+
+    # check if bad channel id
+    if channel_details is None:
+        return None, None, None, None
+
     videos = getVideoList(api_key, channel_details["uploads"])
     videos_df = pd.DataFrame(videos)
     video_ids = [video['id'] for video in videos if video['id'] is not None]
@@ -34,7 +39,7 @@ def download_data(api_key, channel_id):
     st.session_state['video_id'] = None
     st.session_state.all_video_df = all_video_data
 
-    st.session_state.api_key = API_KEY
+    st.session_state.api_key = st.session_state.API_KEY
 
     return channel_details, videos, all_video_data, videos_df
 
@@ -101,24 +106,39 @@ st.title("YouTube Analytics Dashboard")
 st.sidebar.title("Settings")
 
 # Sidebar: Enter Channel ID and YouTube API Key
-API_KEY = st.sidebar.text_input("Enter your YouTube API Key", "",
-                                type="password")
-CHANNEL_ID = st.sidebar.text_input("Enter the YouTube Channel ID", "")
+if 'API_KEY' not in st.session_state:
+    st.session_state.API_KEY = ""
+if 'CHANNEL_ID' not in st.session_state:
+    st.session_state.CHANNEL_ID = ""
 
-if not API_KEY or not CHANNEL_ID:
+st.session_state.API_KEY = st.sidebar.text_input("Enter your YouTube API Key", st.session_state.API_KEY,
+                                                 type="password")
+st.session_state.CHANNEL_ID = st.sidebar.text_input("Enter the YouTube Channel ID", st.session_state.CHANNEL_ID)
+
+if not st.session_state.API_KEY or not st.session_state.CHANNEL_ID:
     st.warning("Please enter your API Key and Channel ID.")
+    # Display the GitHub link for the user manual
+    user_manual_link = "https://github.com/zainmz/Youtube-Channel-Analytics-Dashboard"
+    st.markdown(f"If you need help, please refer to the the GitHub Repository for the [User Manual]({user_manual_link}).")
     st.stop()
 
 # Data Refresh Button
 refresh_button = st.sidebar.button("Refresh Data")
 
 # First Data Load
-channel_details, videos, all_video_data, videos_df = download_data(API_KEY, CHANNEL_ID)
+channel_details, videos, all_video_data, videos_df = download_data(st.session_state.API_KEY, st.session_state.CHANNEL_ID)
+
+if channel_details is None:
+    st.warning("Invalid YouTube Channel ID. Please check and enter a valid Channel ID.")
+    st.stop()
 
 if refresh_button:
     with st.spinner("Refreshing data..."):
-        st.cache_data.clear()
-        channel_details, videos, all_video_data, videos_df = download_data(API_KEY, CHANNEL_ID)
+        channel_details, videos, all_video_data, videos_df = download_data(st.session_state.API_KEY, st.session_state.CHANNEL_ID)
+
+        if channel_details is None:
+            st.warning("Invalid YouTube Channel ID. Please check and enter a valid Channel ID.")
+            st.stop()
 
 # Data Filters for fine-tuned data selection
 st.sidebar.title("Data Filters")
@@ -140,7 +160,7 @@ if start_date > end_date:
     st.sidebar.warning("Start date should be earlier than end date.")
     st.stop()
 
-tag_search = st.sidebar.text_input("Search Videos by Tags")
+tag_search = st.sidebar.text_input("Search Videos by Tag")
 
 date_range_start = pd.Timestamp(start_date)
 date_range_end = pd.Timestamp(end_date)
@@ -177,7 +197,7 @@ with col1:
 
 with col3:
     # Go to Channel Button
-    st.link_button("Go to Channel", f"https://www.youtube.com/channel/{CHANNEL_ID}")
+    st.link_button("Go to Channel", f"https://www.youtube.com/channel/{st.session_state.CHANNEL_ID}")
 
 col1, col2, col3 = st.columns(3)
 col1.metric("Total Views", view_count_formatted, "")

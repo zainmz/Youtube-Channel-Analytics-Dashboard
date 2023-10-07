@@ -123,7 +123,6 @@ else:
 
     with st.spinner("Getting Comment Data...."):
         comment_data = get_comments()
-        st.subheader("All Commenters")
         top_10_comments_df = comment_data.head(10)
         st.table(top_10_comments_df)
 

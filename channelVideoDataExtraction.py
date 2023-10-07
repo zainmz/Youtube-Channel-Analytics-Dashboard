@@ -48,21 +48,21 @@ def getVideoComments(api_key, video_id):
                 }
                 all_comments.append(reply_data)
 
-    next_page_token = response.get('nextPageToken')
-    more_pages = True
+    next_page_available = response.get('nextPageToken')
+    is_other_pages = True
 
-    while more_pages:
+    while is_other_pages:
         if len(all_comments) == 1000:
             break
-        if next_page_token is None:
-            more_pages = False
+        if next_page_available is None:
+            is_other_pages = False
         else:
             request = youtube.commentThreads() \
                 .list(part="snippet,replies",
                       videoId=video_id,
                       maxResults=100,
                       textFormat='plainText',
-                      pageToken=next_page_token)
+                      pageToken=next_page_available)
             response = request.execute()
 
             for comment in response['items']:
@@ -97,7 +97,7 @@ def getVideoComments(api_key, video_id):
                         }
                         all_comments.append(reply_data)
 
-            next_page_token = response.get('nextPageToken')
+            next_page_available = response.get('nextPageToken')
 
     # create the dataframe
     comment_data = pd.DataFrame(all_comments)
@@ -146,36 +146,36 @@ def getVideoList(api_key, playlist_id):
 
     all_videos = []
 
-    for video in response['items']:
-        video_stats = {
-            'id': video['contentDetails'].get('videoId', None),
-            'title': video['snippet'].get('title', None),
-            'thumbnail': video['snippet']['thumbnails']['default']['url']
+    for vid in response['items']:
+        vid_stats = {
+            'id': vid['contentDetails'].get('videoId', None),
+            'title': vid['snippet'].get('title', None),
+            'thumbnail': vid['snippet']['thumbnails']['default']['url']
         }
-        all_videos.append(video_stats)
+        all_videos.append(vid_stats)
 
-    next_page_token = response.get('nextPageToken')
-    more_pages = True
+    next_page_available = response.get('nextPageToken')
+    is_next_pages = True
 
-    while more_pages:
-        if next_page_token is None:
-            more_pages = False
+    while is_next_pages:
+        if next_page_available is None:
+            is_next_pages = False
         else:
             request = youtube.playlistItems().list(part="contentDetails,snippet",
                                                    playlistId=playlist_id,
                                                    maxResults=50,
-                                                   pageToken=next_page_token)
+                                                   pageToken=next_page_available)
             response = request.execute()
 
-            for video in response['items']:
-                video_stats = {
-                    'id': video['contentDetails'].get('videoId', None),
-                    'title': video['snippet'].get('title', None),
-                    'thumbnail': video['snippet']['thumbnails']['default']['url']
+            for vid in response['items']:
+                vid_stats = {
+                    'id': vid['contentDetails'].get('videoId', None),
+                    'title': vid['snippet'].get('title', None),
+                    'thumbnail': vid['snippet']['thumbnails']['default']['url']
                 }
-                all_videos.append(video_stats)
+                all_videos.append(vid_stats)
 
-            next_page_token = response.get('nextPageToken')
+            next_page_available = response.get('nextPageToken')
 
     # print(all_videos)
     return all_videos
@@ -184,7 +184,7 @@ def getVideoList(api_key, playlist_id):
 def buildVideoListDataframe(api_key, video_ids):
     youtube = googleapiclient.discovery.build("youtube", "v3", developerKey=api_key)
 
-    all_video_stats = []
+    all_vids_stats = []
 
     for i in range(0, len(video_ids), 50):
         request = youtube.videos().list(
@@ -192,42 +192,32 @@ def buildVideoListDataframe(api_key, video_ids):
             id=','.join(video_ids[i:i + 50]))
         response = request.execute()
 
-        for video in response['items']:
-            thumbnail_url = video['snippet']['thumbnails'].get('standard', {}).get('url', None)
+        for vid in response['items']:
+            thumbnail_url = vid['snippet']['thumbnails'].get('standard', {}).get('url', None)
 
-            video_stats = {
-                'id': video.get('id', None),
-                'title': video['snippet'].get('title', None),
-                'published_date': video['snippet'].get('publishedAt', None),
-                'tags': video['snippet'].get('tags', []),
-                'duration': video['contentDetails'].get('duration', None),
-                'view_count': video['statistics'].get('viewCount', None),
-                'like_count': video['statistics'].get('likeCount', None),
-                'favorite_count': video['statistics'].get('favoriteCount', None),
-                'comment_count': video['statistics'].get('commentCount', None),
+            vid_stats = {
+                'id': vid.get('id', None),
+                'title': vid['snippet'].get('title', None),
+                'published_date': vid['snippet'].get('publishedAt', None),
+                'tags': vid['snippet'].get('tags', []),
+                'duration': vid['contentDetails'].get('duration', None),
+                'view_count': vid['statistics'].get('viewCount', None),
+                'like_count': vid['statistics'].get('likeCount', None),
+                'favorite_count': vid['statistics'].get('favoriteCount', None),
+                'comment_count': vid['statistics'].get('commentCount', None),
                 'thumbnail': thumbnail_url
             }
-            all_video_stats.append(video_stats)
+            all_vids_stats.append(vid_stats)
 
     # create the dataframe
-    video_data = pd.DataFrame(all_video_stats)
+    vids_info = pd.DataFrame(all_vids_stats)
     # Convert columns to numeric
     numeric_columns = ['comment_count', 'like_count', 'view_count']
-    video_data[numeric_columns] = video_data[numeric_columns]\
+    vids_info[numeric_columns] = vids_info[numeric_columns]\
                                   .apply(pd.to_numeric, errors='coerce')
 
     # Function to convert ISO 8601 duration to minutes
     def iso8601_duration_to_minutes(duration):
-        """Converts an ISO 8601 duration string to minutes.
-
-        Args:
-            duration: A string representing an ISO 8601 duration.
-
-        Returns:
-            A float representing the duration in minutes.
-        """
-
-        # Match the minutes and seconds components of the duration.
         minutes_match = re.search(r'(\d+)M', duration)
         seconds_match = re.search(r'(\d+)S', duration)
 
@@ -241,21 +231,21 @@ def buildVideoListDataframe(api_key, video_ids):
         return total_minutes
 
     # Apply the conversion function to the 'duration' column
-    video_data['duration_minutes'] = video_data['duration']\
+    vids_info['duration_minutes'] = vids_info['duration']\
                                      .apply(iso8601_duration_to_minutes)
 
     # Convert 'published_date' to a pandas datetime object
-    video_data['published_date'] = pd.to_datetime(video_data['published_date'])
+    vids_info['published_date'] = pd.to_datetime(vids_info['published_date'])
 
     # Format 'published_date'
-    video_data['published_date'] = video_data['published_date']\
+    vids_info['published_date'] = vids_info['published_date']\
                                    .dt.strftime('%Y-%m-%d %I:%M:%S')
 
-    video_data.to_excel("all_video_Data.xlsx", index=False)
+    vids_info.to_excel("all_vids_info.xlsx", index=False)
 
-    print(video_data.head(5))
+    print(vids_info.head(5))
 
-    return video_data
+    return vids_info
 
 
 # video_ids = getVideoList(API_KEY, playlist_id)
