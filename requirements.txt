@@ -8,6 +8,7 @@ wordcloud==1.9.2
 prophet==1.1.4
 networkx==3.1
 igraph==0.10.8
-streamlit-extras==0.3.2
+streamlit_extras==0.3.2
 openpyxl==3.1.2
-google-api-python-client==2.102.0
+google-api-client-python>=2.101.0
+scipy~=1.11.2
