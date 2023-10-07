@@ -207,7 +207,6 @@ style_metric_cards(background_color="#000000",
                    border_left_color="#049204",
                    border_color="#0E0E0E"
                    )
-# col3.metric("Humidity", "86%", "4%")
 
 ########################################################################################################################
 #                                            TOP  VIDEO GRAPHS AREA
