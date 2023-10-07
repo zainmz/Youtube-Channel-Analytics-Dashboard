@@ -10,5 +10,5 @@ networkx==3.1
 igraph==0.10.8
 streamlit_extras==0.3.2
 openpyxl==3.1.2
-google-api-client-python>=2.101.0
+google-api-client-python~=2.101.0
 scipy~=1.11.2
