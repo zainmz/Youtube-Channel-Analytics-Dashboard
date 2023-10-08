@@ -32,7 +32,7 @@ This dashboard provides comprehensive analytics for YouTube channels. It allows 
 - Provides a search functionality to filter videos by title.
 
 ## Usage
-
+For Detailed View on features and usage, refer to the user manual [User Manual](https://github.com/zainmz/Youtube-Channel-Analytics-Dashboard/blob/4ac60719d5ba7366fcf6c400aace7765810174b8/User%20Manual.pdf)
 1. **API Key & Channel ID**: Enter your YouTube API Key and Channel ID in the sidebar.
 2. **Data Filters**: Fine-tune the data displayed using filters such as date range and tags.
 3. **Refresh Data**: Use the "Refresh Data" button in the sidebar to fetch the latest data.
@@ -40,7 +40,7 @@ This dashboard provides comprehensive analytics for YouTube channels. It allows 
 5. **Detailed Video Stats**: Click on "Check Video Statistics" for a specific video to view its detailed analytics.
 
 ## Installation & Setup
-
+For Detailed instruction on installation and how to get Youtube Data API, refer to the user manual [User Manual](https://github.com/zainmz/Youtube-Channel-Analytics-Dashboard/blob/4ac60719d5ba7366fcf6c400aace7765810174b8/User%20Manual.pdf)
 1. Clone the repository.
 2. Install the required Python packages using `pip install -r requirements.txt`.
 3. Run the Streamlit app using `streamlit run app.py`.
